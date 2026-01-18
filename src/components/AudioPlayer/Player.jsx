@@ -38,22 +38,18 @@ export default function Player({ currentTrack, onNext, onPrev }) {
         sweepRef.current.phase = Math.asin((currentCenter / 50) - 1);
 
         const sweepInterval = setInterval(() => {
-            sweepRef.current.phase += 0.01; // Controlled speed
-            const center = (Math.sin(sweepRef.current.phase) + 1) * 50; // 0 to 100
+            sweepRef.current.phase += 0.005; // 0.5x speed (was 0.01)
+
             const halfBW = sweepRef.current.bandwidth / 2;
+            const range = 100 - sweepRef.current.bandwidth;
 
-            let newLow = center - halfBW;
-            let newHigh = center + halfBW;
+            // Map sine (-1 to 1) to the valid center range [halfBW, 100 - halfBW]
+            // This prevents the "pause" at the ends caused by clamping
+            const centerFactor = (Math.sin(sweepRef.current.phase) + 1) / 2; // 0 to 1
+            const center = halfBW + (centerFactor * range);
 
-            // Bounce/Clamp logic
-            if (newLow < 0) {
-                newLow = 0;
-                newHigh = sweepRef.current.bandwidth;
-            }
-            if (newHigh > 100) {
-                newHigh = 100;
-                newLow = 100 - sweepRef.current.bandwidth;
-            }
+            const newLow = center - halfBW;
+            const newHigh = center + halfBW;
 
             setLowSlider(newLow);
             setHighSlider(newHigh);
