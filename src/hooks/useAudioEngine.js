@@ -68,8 +68,10 @@ export function useAudioEngine(onEnded) {
 
         // Stop previous
         if (sourceNodeRef.current) {
-            try { sourceNodeRef.current.stop(); } catch (e) { }
-            sourceNodeRef.current.disconnect();
+            const oldSource = sourceNodeRef.current;
+            sourceNodeRef.current = null; // Prevent onended from triggering onNext
+            try { oldSource.stop(); } catch (e) { }
+            oldSource.disconnect();
         }
 
         const arrayBuffer = await file.arrayBuffer();
