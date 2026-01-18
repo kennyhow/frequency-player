@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAudioEngine } from '../../hooks/useAudioEngine';
 import { toLog, toLinear } from '../../utils/audioMath';
 import './Player.css';
