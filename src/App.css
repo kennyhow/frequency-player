@@ -1,0 +1,43 @@
+.app-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  width: 100%;
+}
+
+.app-header h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+  margin-bottom: 0.5rem;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+.text-gradient {
+  background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.app-header p {
+  color: var(--text-dim);
+  font-size: 1.1rem;
+}
+
+.player-wrapper {
+  background: var(--surface-color);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  padding: 3rem;
+  width: 100%;
+  max-width: 800px;
+  box-shadow: var(--glass-shadow);
+  min-height: 400px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
