@@ -16,7 +16,7 @@ export default function Player({ currentTrack, onNext, onPrev }) {
         duration,
         currentTime,
         setFrequencyRange
-    } = useAudioEngine();
+    } = useAudioEngine(onNext);
 
     // Internal state for Sliders (0-100 linear position)
     // We initialize them to represent the full range (20Hz - 20kHz)
@@ -42,10 +42,44 @@ export default function Player({ currentTrack, onNext, onPrev }) {
 
     // Listen for track changes from Library
     useEffect(() => {
-        if (currentTrack && currentTrack.file) {
-            loadFile(currentTrack.file);
+        async function loadTrack() {
+            if (!currentTrack) return;
+
+            // If we have a file blob, use it
+            if (currentTrack.file) {
+                loadFile(currentTrack.file);
+                return;
+            }
+
+            // If we have a fileHandle, retrieve the file blob
+            if (currentTrack.fileHandle) {
+                try {
+                    const opts = { mode: 'read' };
+                    if ((await currentTrack.fileHandle.queryPermission(opts)) !== 'granted') {
+                        if ((await currentTrack.fileHandle.requestPermission(opts)) !== 'granted') {
+                            console.error("Permission denied to play file handle");
+                            return;
+                        }
+                    }
+                    const file = await currentTrack.fileHandle.getFile();
+                    loadFile(file);
+                } catch (err) {
+                    console.error("Error loading file from handle:", err);
+                }
+            }
         }
+
+        loadTrack();
     }, [currentTrack]);
+
+    // Auto-play when ready if it was already playing or if it's a new track from next/prev
+    useEffect(() => {
+        if (isReady && !isPlaying && currentTrack) {
+            // Check if we should auto-play. For auto-proceed, we usually want it to play.
+            // We can add a more sophisticated check here if needed.
+            play();
+        }
+    }, [isReady, currentTrack]);
 
 
     const handleRangeChange = (type, sliderVal) => {

@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 
-export function useAudioEngine() {
+export function useAudioEngine(onEnded) {
     const [isPlaying, setIsPlaying] = useState(false);
     const [duration, setDuration] = useState(0);
     const [currentTime, setCurrentTime] = useState(0);
@@ -81,6 +81,7 @@ export function useAudioEngine() {
             setDuration(decodedData.duration);
             setIsReady(true);
             pauseTimeRef.current = 0;
+            setCurrentTime(0);
         } catch (err) {
             console.error("Error decoding audio:", err);
         }
@@ -136,7 +137,8 @@ export function useAudioEngine() {
             if (!sourceNodeRef.current) return;
             const now = ctx.currentTime;
             // Simple loop for visualization or time update
-            setCurrentTime(Math.min(now - startTimeRef.current, audioBufferRef.current.duration));
+            const elapsed = now - startTimeRef.current;
+            setCurrentTime(Math.min(elapsed, audioBufferRef.current.duration));
 
             if (ctx.state === 'running') {
                 animationFrameRef.current = requestAnimationFrame(update);
@@ -145,17 +147,22 @@ export function useAudioEngine() {
         update();
 
         source.onended = () => {
-            setIsPlaying(false);
-            // Don't reset time immediately for UX
+            // Only trigger onEnded if it finished naturally (not stopped manually)
+            // When we pause, we set sourceNodeRef.current to null before calling stop()
+            if (sourceNodeRef.current === source) {
+                setIsPlaying(false);
+                if (onEnded) onEnded();
+            }
         };
     };
 
     const pause = () => {
         if (!sourceNodeRef.current) return;
         const ctx = audioContextRef.current;
-        sourceNodeRef.current.stop();
-        sourceNodeRef.current.disconnect();
-        sourceNodeRef.current = null;
+        const source = sourceNodeRef.current;
+        sourceNodeRef.current = null; // Important for onended logic
+        source.stop();
+        source.disconnect();
 
         // Save time
         pauseTimeRef.current = ctx.currentTime - startTimeRef.current;
