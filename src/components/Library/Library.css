@@ -1,0 +1,128 @@
+.library-container {
+    background: var(--surface-color);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 400px;
+    height: 600px;
+    /* Fixed height for scrolling */
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--glass-shadow);
+}
+
+.library-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.library-header h2 {
+    font-size: 1.2rem;
+    margin: 0;
+    color: #fff;
+}
+
+.import-btn {
+    background: var(--primary-color);
+    border: none;
+    border-radius: 20px;
+    padding: 8px 16px;
+    color: #000;
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.import-btn:hover {
+    transform: scale(1.05);
+}
+
+.track-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+.track-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 10px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+    border: 1px solid transparent;
+}
+
+.track-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.track-item.active-track {
+    background: rgba(0, 240, 255, 0.1);
+    border-color: rgba(0, 240, 255, 0.3);
+}
+
+.track-icon {
+    font-size: 1.2rem;
+    opacity: 0.7;
+}
+
+.track-details {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    overflow: hidden;
+}
+
+.track-title {
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.track-artist {
+    color: var(--text-dim);
+    font-size: 0.8rem;
+}
+
+.empty-state {
+    text-align: center;
+    margin-top: 3rem;
+    color: var(--text-dim);
+}
+
+.scanning-indicator {
+    text-align: center;
+    padding: 1rem;
+    font-size: 0.9rem;
+    color: var(--primary-color);
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0.6;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.6;
+    }
+}

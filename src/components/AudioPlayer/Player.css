@@ -30,6 +30,24 @@
     box-shadow: 0 0 20px rgba(0, 240, 255, 0.6);
 }
 
+.track-info-display {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.track-info-display h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.track-info-display p {
+    margin: 0.5rem 0 0;
+    color: var(--secondary-color);
+    font-weight: 500;
+}
+
 .track-info {
     font-size: 0.9rem;
     color: var(--text-dim);
@@ -38,17 +56,44 @@
 .main-controls {
     display: flex;
     justify-content: center;
+    align-items: center;
+    gap: 2rem;
+    /* Space between play and nav buttons */
     margin: 1rem 0;
 }
 
+.nav-btn {
+    background: transparent;
+    border: 2px solid var(--border-color);
+    color: var(--text-dim);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.nav-btn:hover:not(:disabled) {
+    border-color: var(--primary-color);
+    color: #fff;
+    transform: scale(1.1);
+}
+
+.nav-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
 .play-btn {
-    width: 120px;
-    height: 120px;
+    width: 100px;
+    /* Slightly smaller for layout balance */
+    height: 100px;
     border-radius: 50%;
     border: none;
     background: var(--bg-color);
     color: #fff;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 800;
     letter-spacing: 2px;
     cursor: pointer;
