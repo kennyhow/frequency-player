@@ -123,6 +123,49 @@
     color: #555;
 }
 
+.effects-row {
+    display: flex;
+    justify-content: center;
+    margin: 0.5rem 0;
+}
+
+.sweep-toggle {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-dim);
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sweep-toggle:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-color: var(--secondary-color);
+}
+
+.sweep-toggle.active {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: #000;
+    border-color: transparent;
+    box-shadow:
+        0 0 20px rgba(0, 240, 255, 0.4),
+        0 0 40px rgba(188, 0, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.sweep-toggle:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
 /* Time & Progress */
 .time-display {
     display: flex;

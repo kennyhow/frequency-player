@@ -23,6 +23,48 @@ export default function Player({ currentTrack, onNext, onPrev }) {
     // 0 -> 20Hz, 100 -> 20kHz
     const [lowSlider, setLowSlider] = useState(0);
     const [highSlider, setHighSlider] = useState(100);
+    const [isSweepEnabled, setIsSweepEnabled] = useState(false);
+
+    const sweepRef = useRef({ phase: 0, bandwidth: 100 });
+
+    // Handle Hypnosis Sweep Logic
+    useEffect(() => {
+        if (!isSweepEnabled) return;
+
+        // Capture current bandwidth to preserve it during sweep
+        sweepRef.current.bandwidth = highSlider - lowSlider;
+        // Start from center of current position
+        const currentCenter = (lowSlider + highSlider) / 2;
+        sweepRef.current.phase = Math.asin((currentCenter / 50) - 1);
+
+        const sweepInterval = setInterval(() => {
+            sweepRef.current.phase += 0.01; // Controlled speed
+            const center = (Math.sin(sweepRef.current.phase) + 1) * 50; // 0 to 100
+            const halfBW = sweepRef.current.bandwidth / 2;
+
+            let newLow = center - halfBW;
+            let newHigh = center + halfBW;
+
+            // Bounce/Clamp logic
+            if (newLow < 0) {
+                newLow = 0;
+                newHigh = sweepRef.current.bandwidth;
+            }
+            if (newHigh > 100) {
+                newHigh = 100;
+                newLow = 100 - sweepRef.current.bandwidth;
+            }
+
+            setLowSlider(newLow);
+            setHighSlider(newHigh);
+
+            const lowHz = toLog(newLow, MIN_FREQ, MAX_FREQ);
+            const highHz = toLog(newHigh, MIN_FREQ, MAX_FREQ);
+            setFrequencyRange(lowHz, highHz);
+        }, 50); // ~20fps for battery efficiency
+
+        return () => clearInterval(sweepInterval);
+    }, [isSweepEnabled]);
 
     // If a track is passed from props (Library), load it
     // We use a simple effect or just react to changes
@@ -83,6 +125,7 @@ export default function Player({ currentTrack, onNext, onPrev }) {
 
 
     const handleRangeChange = (type, sliderVal) => {
+        if (isSweepEnabled) setIsSweepEnabled(false); // Disable sweep on manual move
         const val = Number(sliderVal);
 
         if (type === 'low') {
@@ -146,6 +189,17 @@ export default function Player({ currentTrack, onNext, onPrev }) {
                     {isPlaying ? 'PAUSE' : 'PLAY'}
                 </button>
                 <button className="nav-btn" onClick={onNext} disabled={!onNext}>&gt;|</button>
+            </div>
+
+            {/* Extra Effects */}
+            <div className="effects-row">
+                <button
+                    className={`sweep-toggle ${isSweepEnabled ? 'active' : ''}`}
+                    onClick={() => setIsSweepEnabled(!isSweepEnabled)}
+                    disabled={!isReady}
+                >
+                    {isSweepEnabled ? '🌀 Sweep Active' : '✨ Hypnosis Sweep'}
+                </button>
             </div>
 
             {/* Time Display */}
