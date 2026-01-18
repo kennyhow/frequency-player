@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import * as mm from 'music-metadata-browser';
+// import * as mm from 'music-metadata-browser'; // Removed to speed up load
 import { v4 as uuidv4 } from 'uuid';
 import { get, set } from 'idb-keyval';
 import './Library.css';
@@ -22,56 +22,38 @@ export default function Library({ onTrackSelect, currentTrackId }) {
     }, []);
 
     // Save to IDB helper
-    const saveLibrary = async (newTracks) => {
-        // We must NOT store the 'file' (Blob) in IDB for the lightweight method
-        // But we MUST store 'fileHandle' if it exists. 
-        // If it's a fallback file (no handle), we can't persist it effectively without copying.
-        // Our plan: Store the track object. If 'file' is there, remove it before saving.
+    // Save to IDB helper with batching support
+    const saveLibrary = async (newTracks, replace = false) => {
+        setPlaylist(prev => {
+            const updated = replace ? newTracks : [...prev, ...newTracks];
 
-        // Merge with existing
-        const updated = [...playlist, ...newTracks];
-        const serializable = updated.map(t => {
-            const { file, ...rest } = t; // Exclude raw file blob
-            return rest;
+            // Async persistence to avoid blocking the UI
+            const serializable = updated.map(t => {
+                const { file, ...rest } = t;
+                return rest;
+            });
+            set('music-library', serializable).catch(err =>
+                console.error("Failed to persist library:", err)
+            );
+
+            return updated;
         });
-
-        await set('music-library', serializable);
-        setPlaylist(updated);
     };
 
-    // Helper to parse file metadata
+    // Helper to create track object from file (Faster, filename-based)
     const parseFile = async (file, handle = null) => {
         try {
-            // Basic info
-            const track = {
+            return {
                 id: uuidv4(),
                 file: file, // Runtime usage only (Blob)
                 fileHandle: handle, // Persistence usage
                 filename: file.name,
-                title: file.name,
+                title: file.name.replace(/\.[^/.]+$/, ""), // Strip extension for title
                 artist: 'Unknown Artist',
                 album: 'Unknown Album'
             };
-
-            // Attempt ID3 parse
-            try {
-                console.log("Starting mm.parseBlob for:", file.name);
-
-                // Race against a 300ms timeout
-                const metadata = await Promise.race([
-                    mm.parseBlob(file),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 300))
-                ]);
-
-                console.log("mm.parseBlob success for:", file.name);
-                if (metadata.common.title) track.title = metadata.common.title;
-                if (metadata.common.artist) track.artist = metadata.common.artist;
-                if (metadata.common.album) track.album = metadata.common.album;
-            } catch (err) {
-                console.warn(`Metadata parse failed/timed-out for ${file.name}:`, err);
-            }
-            return track;
         } catch (e) {
+            console.error("Error creating track object:", e);
             return null;
         }
     };
@@ -126,16 +108,14 @@ export default function Library({ onTrackSelect, currentTrackId }) {
                 console.log("Scanning directory:", dirHandle.name);
                 for await (const entry of dirHandle.values()) {
                     if (entry.kind === 'file') {
-                        // We get the file to parse metadata, but we also save the 'entry' as fileHandle
                         const file = await entry.getFile();
                         if (file.type.startsWith('audio/')) {
-                            console.log("Found audio file:", file.name);
                             const track = await parseFile(file, entry);
                             if (track) {
-                                console.log("Parsed track:", track.title);
+                                // Update UI immediately
+                                setPlaylist(prev => [...prev, track]);
+                                // Store for final persistence
                                 newTracks.push(track);
-                            } else {
-                                console.warn("Skipping track (parse returned null):", file.name);
                             }
                         }
                     } else if (entry.kind === 'directory') {
@@ -145,7 +125,15 @@ export default function Library({ onTrackSelect, currentTrackId }) {
             }
 
             await scanDir(handle);
-            await saveLibrary(newTracks);
+
+            // Final persistence of all new tracks added
+            const stored = await get('music-library') || [];
+            const serializableNew = newTracks.map(t => {
+                const { file, ...rest } = t;
+                return rest;
+            });
+            await set('music-library', [...stored, ...serializableNew]);
+
             setIsScanning(false);
 
         } catch (err) {
@@ -165,13 +153,21 @@ export default function Library({ onTrackSelect, currentTrackId }) {
         for (const file of files) {
             if (file.type.startsWith('audio/')) {
                 const track = await parseFile(file);
-                if (track) newTracks.push(track);
+                if (track) {
+                    setPlaylist(prev => [...prev, track]);
+                    newTracks.push(track);
+                }
             }
         }
-        // Note: We scan these, but since they have no handles, 
-        // they won't work after reload. We still save them to IDB so the list shows up,
-        // but clicking them will fail (handled in handleTrackClick).
-        await saveLibrary(newTracks);
+
+        // Final persistence
+        const stored = await get('music-library') || [];
+        const serializableNew = newTracks.map(t => {
+            const { file, ...rest } = t;
+            return rest;
+        });
+        await set('music-library', [...stored, ...serializableNew]);
+
         setIsScanning(false);
     };
 
